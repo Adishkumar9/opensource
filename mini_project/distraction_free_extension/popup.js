@@ -18,7 +18,10 @@ document.getElementById("blockButton").addEventListener("click", () => {
   
           // Send the message to the background script with the hostname
           chrome.runtime.sendMessage({ type: "toggleBlock", site }, (response) => {
-            if (response && response.success) {
+            if (chrome.runtime.lastError) {
+              console.error("Error:", chrome.runtime.lastError); // Log any communication errors
+              statusDiv.innerText = "Error communicating with background script.";
+            } else if (response && response.success) {
               statusDiv.innerText = `${site} has been toggled.`;
             } else {
               statusDiv.innerText = `Failed to toggle ${site}.`;
@@ -31,6 +34,7 @@ document.getElementById("blockButton").addEventListener("click", () => {
           });
         } catch (error) {
           // Display an error message if URL creation fails unexpectedly
+          console.error("URL Error:", error); // Log the error for debugging
           statusDiv.innerText = "An error occurred. Please try again.";
           statusDiv.classList.add("show");
           setTimeout(() => {
