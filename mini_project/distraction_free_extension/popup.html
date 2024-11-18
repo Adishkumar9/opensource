@@ -4,100 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Website Blocker</title>
-  <style>
-    /* Popup Dimensions */
-    body {
-      width: 400px;
-      height: 320px;
-      font-family: Arial, sans-serif;
-      background: #f5f5f5;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #333;
-      margin: 0;
-    }
-
-    /* Container styling */
-    #container {
-      background: #ffffff;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-      width: 90%;
-      max-width: 350px;
-      text-align: center;
-    }
-
-    h2 {
-      margin: 0;
-      font-size: 20px;
-      color: #333;
-      font-weight: 600;
-    }
-
-    p {
-      font-size: 14px;
-      color: #666;
-      margin-top: 5px;
-    }
-
-    #siteInput {
-      width: 100%;
-      padding: 12px;
-      margin-top: 15px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 14px;
-      color: #333;
-      outline: none;
-      transition: border-color 0.3s ease-in-out;
-    }
-
-    #siteInput:focus {
-      border-color: #4a90e2;
-    }
-
-    #blockButton {
-      width: 100%;
-      padding: 12px;
-      margin-top: 15px;
-      border: none;
-      border-radius: 6px;
-      background-color: #4a90e2;
-      color: white;
-      font-size: 16px;
-      cursor: pointer;
-      transition: background-color 0.3s;
-    }
-
-    #blockButton:hover {
-      background-color: #357abd;
-    }
-
-    #status {
-      margin-top: 15px;
-      font-size: 14px;
-      color: #4a90e2;
-      opacity: 0;
-      transition: opacity 0.5s;
-    }
-
-    #status.show {
-      opacity: 1;
-    }
-  </style>
+  <link rel="stylesheet" href="popup.css">
 </head>
 <body>
+  <div class="popup-container">
+    <h1>Website Blocker</h1>
+    <p>Enter a URL to block:</p>
+    <input type="text" id="urlInput" placeholder="e.g., www.example.com">
+    <button id="addButton">Block Website</button>
+    <p id="feedback"></p>
 
-  <div id="container">
-    <h2>Website Blocker</h2>
-    <p>Enter the website URL you wish to block or unblock.</p>
-    <input type="text" id="siteInput" placeholder="e.g., example.com">
-    <button id="blockButton">Toggle Block</button>
-    <div id="status"></div>
+    <h2>Blocked Websites</h2>
+    <ul id="blockedList"></ul>
   </div>
-
   <script src="popup.js"></script>
 </body>
 </html>

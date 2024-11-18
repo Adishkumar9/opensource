@@ -1,64 +1,109 @@
-document.getElementById("blockButton").addEventListener("click", () => {
-    const siteInput = document.getElementById("siteInput").value.trim();
-    const statusDiv = document.getElementById("status");
-  
-    // Clear the status message before each click
-    statusDiv.innerText = "";
-    statusDiv.classList.remove("show");
-  
-    // Regular expression to validate the URL format
-    const urlPattern = /^(https?:\/\/)?([\w-]+\.)+[\w-]{2,}(\/\S*)?$/;
-  
-    if (siteInput) {
-      // Check if the input matches the URL pattern
-      if (urlPattern.test(siteInput)) {
-        try {
-          // Prepend "http://" if the protocol is missing to ensure compatibility with `new URL`
-          const site = new URL(siteInput.includes("://") ? siteInput : `http://${siteInput}`).hostname;
-  
-          // Send the message to the background script with the hostname
-          chrome.runtime.sendMessage({ type: "toggleBlock", site }, (response) => {
-            if (chrome.runtime.lastError) {
-              console.error("Error:", chrome.runtime.lastError); // Log any communication errors
-              statusDiv.innerText = "Error communicating with background script.";
-            } else if (response && response.success) {
-              statusDiv.innerText = `${site} has been toggled.`;
-            } else {
-              statusDiv.innerText = `Failed to toggle ${site}.`;
-            }
-            statusDiv.classList.add("show");
-            setTimeout(() => {
-              statusDiv.classList.remove("show");
-              statusDiv.innerText = "";
-            }, 2000);
-          });
-        } catch (error) {
-          // Display an error message if URL creation fails unexpectedly
-          console.error("URL Error:", error); // Log the error for debugging
-          statusDiv.innerText = "An error occurred. Please try again.";
-          statusDiv.classList.add("show");
-          setTimeout(() => {
-            statusDiv.classList.remove("show");
-            statusDiv.innerText = "";
-          }, 2000);
-        }
-      } else {
-        // Display an error if the URL format is invalid
-        statusDiv.innerText = "Invalid URL format. Please enter a valid URL.";
-        statusDiv.classList.add("show");
-        setTimeout(() => {
-          statusDiv.classList.remove("show");
-          statusDiv.innerText = "";
-        }, 2000);
-      }
+const urlInput = document.getElementById("urlInput");
+const addButton = document.getElementById("addButton");
+const blockedList = document.getElementById("blockedList");
+const feedback = document.getElementById("feedback");
+
+// Update the blocked list UI
+function updateBlockedList() {
+  chrome.storage.sync.get("blockedUrls", (data) => {
+    const blockedUrls = data.blockedUrls || [];
+    blockedList.innerHTML = "";
+    blockedUrls.forEach((url) => {
+      const listItem = document.createElement("li");
+      listItem.textContent = url;
+
+      const removeButton = document.createElement("button");
+      removeButton.textContent = "Unblock";
+      removeButton.addEventListener("click", () => {
+        removeBlockedUrl(url);
+      });
+
+      listItem.appendChild(removeButton);
+      blockedList.appendChild(listItem);
+    });
+  });
+}
+
+// Add a new URL to the blocklist
+addButton.addEventListener("click", () => {
+  const url = urlInput.value.trim();
+  if (!url) {
+    feedback.textContent = "Please enter a valid URL.";
+    feedback.style.color = "red";
+    return;
+  }
+
+  chrome.storage.sync.get("blockedUrls", (data) => {
+    const blockedUrls = data.blockedUrls || [];
+    if (!blockedUrls.includes(url)) {
+      blockedUrls.push(url);
+      chrome.storage.sync.set({ blockedUrls }, () => {
+        addBlockingRule(url);
+        feedback.textContent = `${url} has been blocked.`;
+        feedback.style.color = "green";
+        urlInput.value = "";
+        updateBlockedList();
+      });
     } else {
-      // Display an error if the input is empty
-      statusDiv.innerText = "Please enter a website.";
-      statusDiv.classList.add("show");
-      setTimeout(() => {
-        statusDiv.classList.remove("show");
-        statusDiv.innerText = "";
-      }, 2000);
+      feedback.textContent = `${url} is already blocked.`;
+      feedback.style.color = "orange";
     }
   });
-  
+});
+
+// Add a blocking rule to Declarative Net Request
+function addBlockingRule(url) {
+  const ruleId = url.hashCode(); // Generate a unique ID for each rule
+  const rule = {
+    id: ruleId,
+    priority: 1,
+    action: { type: "block" },
+    condition: { urlFilter: `*://${url}/*` }
+  };
+  chrome.declarativeNetRequest.updateDynamicRules(
+    { addRules: [rule] },
+    () => {
+      if (chrome.runtime.lastError) {
+        console.error(chrome.runtime.lastError.message);
+      }
+    }
+  );
+}
+
+// Remove a URL from the blocklist
+function removeBlockedUrl(url) {
+  chrome.storage.sync.get("blockedUrls", (data) => {
+    let blockedUrls = data.blockedUrls || [];
+    blockedUrls = blockedUrls.filter((u) => u !== url);
+    chrome.storage.sync.set({ blockedUrls }, () => {
+      removeBlockingRule(url);
+      updateBlockedList();
+    });
+  });
+}
+
+// Remove a blocking rule from Declarative Net Request
+function removeBlockingRule(url) {
+  const ruleId = url.hashCode();
+  chrome.declarativeNetRequest.updateDynamicRules(
+    { removeRuleIds: [ruleId] },
+    () => {
+      if (chrome.runtime.lastError) {
+        console.error(chrome.runtime.lastError.message);
+      }
+    }
+  );
+}
+
+// Generate a unique hash code for a string
+String.prototype.hashCode = function () {
+  let hash = 0;
+  for (let i = 0; i < this.length; i++) {
+    hash = (hash << 5) - hash + this.charCodeAt(i);
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  return Math.abs(hash);
+};
+
+// Load the blocked URLs on popup open
+updateBlockedList();

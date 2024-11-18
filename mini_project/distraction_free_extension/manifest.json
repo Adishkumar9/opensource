@@ -1,16 +1,21 @@
 {
-    "manifest_version": 3,
-    "name": "Your Extension Name",
-    "version": "1.0",
-    "description": "Your extension description",
-    "action": {
-      "default_popup": "popup.html",
-      "default_icon": {
-        "16": "icons/icon16.png",
-        "48": "icons/icon48.png",
-        "128": "icons/icon128.png"
+  "manifest_version": 3,
+  "name": "Website Blocker",
+  "version": "1.0",
+  "description": "Block websites to improve focus.",
+  "permissions": ["declarativeNetRequest", "storage"],
+  "host_permissions": ["<all_urls>"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Block Websites"
+  },
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "ruleset_1",
+        "enabled": true,
+        "path": "rules.json"
       }
-    },
-    "permissions": ["activeTab"]
+    ]
   }
-  
+}
